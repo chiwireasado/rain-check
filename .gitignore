@@ -1,0 +1,8 @@
+.venv/
+venv/
+ENV/
+.idea/
+pyvenv.cfg
+CACHEDIR.TAG
+**/__pycache__/
+*.py[cod]

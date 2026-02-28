@@ -1,1 +1,1 @@
-class ModuloGeografico
+class ModuloGeografico:

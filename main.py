@@ -1,41 +1,50 @@
 from modulo_global import ModuloGlobal
 from modulo_transporte import ModuloTransporte
-from modulo_geo import ModuloGeografico
+from modulo_climatico import ModuloClimatico
 from modulo_temporal import ModuloTemporal
+import time
 
 
 class RainCheck:
     def __init__(self):
         self.m_global = ModuloGlobal()
         self.m_transporte = ModuloTransporte()
-        self.m_geo = ModuloGeografico()
+        self.m_climatico = ModuloClimatico()
         self.m_temporal = ModuloTemporal()
 
-        self.opciones = {
-            '1': ('Modulo global', self.m_global.ejecutar),
-            '2': ('Modulo transporte ', self.m_transporte.ejecutar),
-            '3': ('Modulo geografico', self.m_geo.ejecutar),
-            '4': ('Modulo temporal', self.m_temporal.ejecutar),
-            '5': ('Salir', self.salir)
-        }
+    def mostrar_encabezado(self):
+        print("\n" + "=" * 45)
+        print("RAINCHECK MADRID - PANEL DE CONTROL ")
+        print("=" * 45)
 
     def showMenu(self):
         while True:
-            print("<<<<<<<<< RAIN CHECK MADRID >>>>>>>>>>>>>")
-            for o, (nombre, _) in self.opciones.items():
-                print(f"{o} . {nombre}")
+            self.mostrar_encabezado()
+            print("  [1] Módulo Global (Lluvia y Transporte)")
+            print("  [2] Módulo de Transporte (Tiempos EMT)")
+            print("  [3] Módulo Climático (Análisis 24h y CSV)")
+            print("  [4] Módulo Temporal (Consulta por Fecha)")
+            print("  [5] Salir del Sistema")
+            print("-" * 45)
 
-            choice = input("\n Selecciona una opcion: ")
+            choice = input("Selecciona una opción (1-5): ").strip()
 
-            if choice in self.opciones:
-                self.opciones[choice][1]()
+            if choice == '1':
+                print("\n[Iniciando Módulo Global...]")
+                self.m_global.ejecutar()
+            elif choice == '2':
+                self.m_transporte.ejecutar()
+            elif choice == '3':
+                self.m_climatico.ejecutar()
+            elif choice == '4':
+                self.m_temporal.ejecutar()
+            elif choice == '5':
+                print("Gracias por usar RainCheck. \n")
+                time.sleep(1)
+                exit()
             else:
-                print("esa opcion no existe, escoge una de verdad")
-
-
-    def salir(self):
-        print("Gracias por usar RainCheck. ¡Cuidado con los charcos!")
-        exit()
+                print("Opción no válida. Por favor, introduce un número del 1 al 5.\n")
+                time.sleep(1)
 
 
 if __name__ == "__main__":

@@ -19,23 +19,23 @@ class RainCheck:
             '5': ('Salir', self.salir)
         }
 
-def showMenu(self):
-    while True:
-        print("<<<<<<<<< RAIN CHECK MADRID >>>>>>>>>>>>>")
-        for o, (nombre, _) in self.opciones.items():
-            print(f"{o} . {nombre}")
+    def showMenu(self):
+        while True:
+            print("<<<<<<<<< RAIN CHECK MADRID >>>>>>>>>>>>>")
+            for o, (nombre, _) in self.opciones.items():
+                print(f"{o} . {nombre}")
 
-        choice = input("\n Selecciona una opcion: ")
+            choice = input("\n Selecciona una opcion: ")
 
-        if choice in self.opciones:
-            self.opciones[choice][1]()
-        else:
-            print("esa opcion no existe, escoge una de verdad")
+            if choice in self.opciones:
+                self.opciones[choice][1]()
+            else:
+                print("esa opcion no existe, escoge una de verdad")
 
 
-def salir(self):
-    print("Gracias por usar RainCheck. ¡Cuidado con los charcos!")
-    exit()
+    def salir(self):
+        print("Gracias por usar RainCheck. ¡Cuidado con los charcos!")
+        exit()
 
 
 if __name__ == "__main__":

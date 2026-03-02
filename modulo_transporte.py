@@ -11,78 +11,99 @@ class ModuloTransporte:
 
     def obtener_token(self):
         url = "https://openapi.emtmadrid.es/v2/mobilitylabs/user/login/"
-        headers = {"X-ClientId": self.client_id, "passKey": self.api_key}
+
+        credenciales = {
+            "X-ClientId": self.client_id,
+            "passKey": self.api_key
+        }
         try:
-            res = requests.get(url, headers=headers)
+            res = requests.get(url, headers=credenciales)
             if res.status_code == 200:
                 return res.json()['data'][0]['accessToken']
-            return None
+            else:
+                print("error del token")
         except:
+            print("error de red")
             return None
 
     def ejecutar(self):
         print(" >>> MODULO TRANSPORTE <<<")
-
         parada = input("Introduce el numero de parada (Nº Parada -> ej: 1234): ").strip()
 
         token = self.obtener_token()
-
         if not token:
-            print("Acceso denegado. Tu cuenta EMT aún no está activa.")
+            print("Acceso denegado. Tu cuenta EMT aún no está activa")
             return
 
+        url_emt = f"https://openapi.emtmadrid.es/v3/transport/busemtmad/stops/{parada}/arrives/"
 
-        url_emt = f"https://openapi.emtmadrid.es/v2/transport/busemtmad/stops/{parada}/arriving/"
-        credenciales = {"accessToken": token}
+        credenciales = {
+            "accessToken": token,
+            "Content-Type": "application/json",
+        }
 
-        payload = {"statistics": "N", "cultureInfo": "ES"}
+        payload = {
+            "cultureInfo": "ES",
+            "Text_StopRequired_YN": "Y",
+            "Text_EstimationsRequired_YN": "Y",
+            "Text_IncidencesRequired_YN": "N"
+        }
+
+        print(f"Buscando informacion de parada: {parada}...")
 
         try:
-            print(f"Buscando informacion de parada: {parada}...")
-            response = requests.post(url_emt, headers=credenciales, json=payload).json()
+            response = requests.post(url_emt, headers=credenciales, json=payload)
 
-            if 'data' in response and response['data']:
-                llegadas = response['data'][0].get('Arrive', [])
+            if response.status_code != 200:
+                print(f"Codigo de estado: {response.status_code}")
+                print(f"error del servidor. CODIGO -> {response.status_code}")
+                print({response.text[:200]})
+                return
+
+
+            res_emt = response.json()
+
+            llegadas = []
+            if 'data' in res_emt and len(res_emt['data']) > 0:
+                datos = res_emt['data'][0]
+
+                for clave in  ['Arrives', 'Arrive', 'arrives']:
+                    if clave in datos:
+                        llegadas = datos[clave]
+                        break
 
                 if llegadas:
-                    print(f"\nINFORMACIÓN ACTUALIZADA (Punto {parada}):")
-                    print(f"{'LÍNEA':<8} | {'TIEMPO ESPERA':<15} | {'DISTANCIA'}")
+                    print(f"\n>>> Parada: {parada} <<<")
+                    print(f"{'LÍNEA': <8} | {'TIEMPO ESPERA':<15} | {'DISTANCIA'}")
 
+                lista_para_excel = []
+                llegadas_ordenadas = sorted(llegadas, key=lambda x: x.get('estimateArrive', 0))
 
-                    lista_para_excel = []
+                for bus in llegadas_ordenadas:
+                    linea = bus.get('line')
+                    segundos = bus.get('estimateArrive', 0)
+                    minutos = segundos // 60
+                    distancia = bus.get('DistanceBus')
+                    tiempo_texto = f"{minutos} min" if minutos > 0 else "Llegando..."
 
+                    print(f"{linea:<8} | {tiempo_texto:<15} | {distancia} metros")
 
-                    llegadas_ordenadas = sorted(llegadas, key=lambda x: x['estimateArrive'])
+                    lista_para_excel.append({
+                        "PUNTO EXACTO": parada,
+                        "LINEA": linea,
+                        "ESTADO": tiempo_texto,
+                        "DISTANCIA (m)": distancia
+                    })
 
-                    for bus in llegadas_ordenadas:
-                        linea = bus['line']
-                        segundos = bus['estimateArrive']
-                        minutos = segundos // 60
-                        distancia = bus['DistanceBus']
-
-                        tiempo_texto = f"{minutos} min" if minutos > 0 else "Llegando..."
-
-                        print(f"{linea:<8} | {tiempo_texto:<15} | {distancia} metros")
-
-                        lista_para_excel.append({
-                            "PUNTO EXACTO": parada,
-                            "LINEA": linea,
-                            "ESTADO": tiempo_texto,
-                            "DISTANCIA (m)": distancia
-                        })
-
-
-                    exportarALpreguntar = input("\n¿Deseas guardar este reporte de tiempo real en Excel? (si/no): ").lower().strip()
-
-                    if exportarALpreguntar == "si":
-                        self.exportar_transporte_pro(lista_para_excel)
-                else:
-                    print("No hay informacion de buses aproximándose a esta parada")
+                exportarALpreguntar = input("\n¿Deseas guardar este reporte en Excel? (si/no): ").lower().strip()
+                if exportarALpreguntar == "si":
+                    self.exportar_transporte_pro(lista_para_excel)
             else:
-                print("La parada no existe o no tiene servicio.")
+                print("📭 No hay información de buses aproximándose a esta parada.")
 
         except Exception as i:
-            print(f"❌ Error en la consulta de tiempo real. -> {i}")
+            print(f"❌ Se produjo un error -> {i} volviendo a menu....")
+
 
     def exportar_transporte_pro(self, datos):
         nombre = "reporte_tiempo_real_transporte.xlsx"
